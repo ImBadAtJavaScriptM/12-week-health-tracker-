@@ -1,0 +1,15 @@
+
+function wireSettings(){
+  const persist=async()=>{await set('settings','main',settings);showToast('Settings saved');};
+  document.querySelector('#start-date').addEventListener('change',async e=>{if(confirm('Change the program start date and recalculate the entire 12-week schedule?')){settings.programStartDate=e.target.value;await persist();}else e.target.value=settings.programStartDate;});
+  document.querySelector('#weight-unit').addEventListener('change',async e=>{settings.preferredWeightUnit=e.target.value;await persist();});
+  document.querySelector('#waist-unit').addEventListener('change',async e=>{settings.preferredWaistUnit=e.target.value;await persist();});
+  document.querySelector('#toggle-ehs').addEventListener('change',async e=>{settings.ehsTrackingEnabled=e.target.checked;await persist();});
+  document.querySelector('#toggle-protein').addEventListener('change',async e=>{settings.proteinTargetEnabled=e.target.checked;await persist();});
+  document.querySelectorAll('[data-supp-toggle]').forEach(el=>el.addEventListener('change',async()=>{settings.enabledSupplements[el.dataset.suppToggle]=el.checked;await persist();}));
+  document.querySelector('#export').addEventListener('click',async()=>{const data=await exportData();const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`12-week-health-tracker-backup-${isoDate()}.json`;a.click();URL.revokeObjectURL(a.href);showToast('Backup exported');});
+  document.querySelector('#restore').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;try{const data=JSON.parse(await file.text());if(!validateBackup(data))throw new Error();if(!confirm('Replace current local tracker data with this backup?'))return;await restoreData(data);settings={...defaults,...(await get('settings','main')||{})};entries=await getAll('dailyEntries');showToast('Backup restored');render();}catch{alert('That file is not a valid 12 Week Health Tracker backup. Nothing was changed.');}});
+  document.querySelector('#reset').addEventListener('click',async()=>{if(confirm('Erase all tracker data on this device? This cannot be undone unless you exported a backup.')){await clearAll();settings={...defaults};await set('settings','main',settings);entries={};showToast('All data reset');currentTab='today';document.querySelectorAll('.bottom-nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab==='today'));render();}});
+}
+
+boot().catch(err=>{console.error(err);app.innerHTML=`<main><section class="card"><h2>Local storage error</h2><p class="muted">The tracker could not open its private on-device database. Your data was not falsely marked as saved. Try reloading Safari or checking that website storage is allowed.</p></section></main>`;});
