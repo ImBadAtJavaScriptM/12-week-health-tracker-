@@ -23,10 +23,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-      - name: Unpack app
+      - name: Assemble app bundle
         run: |
-          mkdir -p site
-          unzip -q 12-week-health-tracker-app.zip -d site
+          cat build/app.part.00 build/app.part.01 build/app.part.02 > site/src/app.js
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
