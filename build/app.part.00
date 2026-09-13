@@ -1,0 +1,110 @@
+import {DEFAULT_START, isoDate, toLocalDate, weekNumber, phaseNumber, phaseLabel, scheduleForDate, programEnd, phaseDates, formatShort, proteinTargetKg, pelvicFloorDetails, dateForProgramDay} from './plan.js';
+import {get,set,clearAll,exportData,restoreData,validateBackup,getAll} from './db.js';
+import {taskCompletion,weeklyMetrics} from './metrics.js';
+
+const APP_VERSION='1.0.0';
+const app=document.querySelector('#app');
+const toast=document.querySelector('#toast');
+let currentTab='today';
+let settings;
+let entries={};
+
+const defaults={
+  programStartDate:DEFAULT_START,
+  preferredWeightUnit:'lb',
+  preferredWaistUnit:'in',
+  ehsTrackingEnabled:true,
+  proteinTargetEnabled:true,
+  enabledSupplements:{creatine:false,caffeine:false,vitaminD:false,omega3:false,magnesium:false,zinc:false,citrulline:false},
+  enabledHabits:{beetroot:true,moisturize:true},
+  schemaVersion:1
+};
+
+function esc(v=''){return String(v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function showToast(msg){toast.textContent=msg;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),1300);}
+function fmtDate(iso){return toLocalDate(iso).toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});}
+function weightKg(value){ if(!value) return null; return settings.preferredWeightUnit==='kg'?Number(value):Number(value)*0.45359237; }
+function displayValue(v){return v===undefined||v===null?'':v;}
+
+async function boot(){
+  settings={...defaults,...(await get('settings','main')||{})};
+  await set('settings','main',settings);
+  entries=await getAll('dailyEntries');
+  bindNav();
+  await render();
+  if('serviceWorker' in navigator && location.protocol!=='file:') navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+
+function bindNav(){
+  document.querySelectorAll('.bottom-nav button').forEach(b=>b.addEventListener('click',()=>{
+    currentTab=b.dataset.tab;
+    document.querySelectorAll('.bottom-nav button').forEach(x=>x.classList.toggle('active',x===b));
+    render(); window.scrollTo({top:0,behavior:'smooth'});
+  }));
+}
+
+async function render(){
+  if(currentTab==='today') await renderToday();
+  if(currentTab==='progress') await renderProgress();
+  if(currentTab==='plan') await renderPlan();
+  if(currentTab==='settings') await renderSettings();
+}
+
+function hero(dateISO,sched,completion=0){
+  const w=sched.week; const phase=sched.phase;
+  let title=w?`Week ${w} of 12`:'12-Week Plan';
+  let sub=w?(w>=11?`${phaseLabel(phase)} · consistency over daily scoring`:`${phaseLabel(phase)} · ${completion}% today`):`Starts ${formatShort(settings.programStartDate)}`;
+  let pct=w?Math.round(((w-1)*7 + (toLocalDate(dateISO).getDay()||7))/84*100):0;
+  if(dateISO>programEnd(settings.programStartDate)) pct=100;
+  return `<section class="hero"><div class="eyebrow">${esc(fmtDate(dateISO))}</div><h1>${title}</h1><div class="sub"><span>${esc(sub)}</span></div><div class="progress-track"><div class="progress-fill" style="width:${Math.min(100,Math.max(0,pct))}%"></div></div></section>`;
+}
+
+async function renderToday(){
+  const date=isoDate(); const entry=entries[date]||{}; const sched=scheduleForDate(date,settings.programStartDate,settings);
+  const completion=taskCompletion(entry,sched);
+  const baseline=await get('baseline','main');
+  const before=date<settings.programStartDate;
+  const after=date>programEnd(settings.programStartDate);
+  let html=`<main>${hero(date,sched,completion)}`;
+  if(before) html+=`<section class="card"><span class="pill">Starts soon</span><h2 style="margin-top:10px">Your plan starts Monday</h2><p class="muted">Week 1 begins ${formatShort(settings.programStartDate)}. You can fill your baseline now so Day 1 is ready.</p></section>`;
+  if(after) html+=`<section class="card"><span class="pill success">12 weeks complete</span><h2 style="margin-top:10px">Program finished</h2><p class="muted">Open Progress for your trends and final review.</p></section>`;
+  if(!baseline) html+=baselineCard({});
+  if(!before&&!after) html+=todayCards(date,entry,sched);
+  if(before && baseline) html+=`<section class="card"><h2>Ready for Monday</h2><p class="muted">Your baseline is saved. The daily AM/PM checklist will appear automatically on ${formatShort(settings.programStartDate)}.</p></section>`;
+  html+=`</main>`; app.innerHTML=html;
+  wireBaseline(); if(!before&&!after) wireToday(date,sched);
+}
+
+function baselineCard(b){
+  return `<section class="card" id="baseline-card"><span class="pill">One-time baseline</span><h2 style="margin-top:10px">Starting point</h2><p class="muted">Private, on-device health and fitness baseline. Photos stay outside the app.</p>
+  <div class="inline-fields">
+    <div class="field"><label>Morning erection frequency (days/week, optional)</label><input id="b-me" type="number" min="0" max="7" value="${displayValue(b.morningErectionDaysPerWeek)}"></div>
+    <div class="field"><label>EHS 1–4 (optional)</label><select id="b-ehs"><option value="">—</option>${[1,2,3,4].map(x=>`<option ${b.ehs==x?'selected':''}>${x}</option>`).join('')}</select></div>
+    <div class="field"><label>Bodyweight (${settings.preferredWeightUnit})</label><input id="b-weight" type="number" step="0.1" value="${displayValue(b.bodyWeight)}"></div>
+    <div class="field"><label>Waist (${settings.preferredWaistUnit})</label><input id="b-waist" type="number" step="0.1" value="${displayValue(b.waist)}"></div>
+    <div class="field"><label>Typical sleep (hours)</label><input id="b-sleep" type="number" min="0" max="14" step="0.25" value="${displayValue(b.typicalSleepHours)}"></div>
+    <div class="field"><label>Cardio sessions/week</label><input id="b-cardio" type="number" min="0" max="14" value="${displayValue(b.weeklyCardioSessions)}"></div>
+    <div class="field"><label>Strength sessions/week</label><input id="b-strength" type="number" min="0" max="14" value="${displayValue(b.weeklyStrengthSessions)}"></div>
+    <div class="field"><label>Energy/readiness 1–5</label><input id="b-energy" type="number" min="1" max="5" value="${displayValue(b.energy)}"></div>
+    <div class="field"><label>Confidence/wellbeing 1–5</label><input id="b-well" type="number" min="1" max="5" value="${displayValue(b.wellbeing)}"></div>
+  </div><button class="primary" id="save-baseline">Save baseline</button></section>`;
+}
+
+function todayCards(date,e,s){
+  const amTasks=s.tasks.filter(t=>t.group==='am'); const pmTasks=s.tasks.filter(t=>t.group==='pm');
+  const taskStates=e.taskStates||{};
+  const weightTarget = proteinTargetKg(weightKg(e.bodyWeight || latestWeight()));
+  return `<section class="card"><div class="row"><div><div class="eyebrow">AM check-in</div><h2 style="margin:4px 0 0">Morning</h2></div><span class="pill ${e.amComplete?'success':''}">${e.amComplete?'Saved':'Open'}</span></div>
+    <div class="inline-fields"><div class="field"><label>Sleep hours <span class="muted">target 7–9</span></label><input data-field="sleepHours" type="number" min="0" max="14" step="0.25" value="${displayValue(e.sleepHours)}"></div>
+    <div class="field"><label>Wake-time consistency</label><select data-field="wakeConsistency"><option value="">Choose</option><option value="yes" ${e.wakeConsistency==='yes'?'selected':''}>On schedule</option><option value="close" ${e.wakeConsistency==='close'?'selected':''}>Close</option><option value="no" ${e.wakeConsistency==='no'?'selected':''}>Off schedule</option></select></div>
+    <div class="field"><label>Morning energy 1–5</label><input data-field="morningEnergy" type="number" min="1" max="5" value="${displayValue(e.morningEnergy)}"></div>
+    ${settings.ehsTrackingEnabled?`<div class="field"><label>Morning erection (optional)</label><select data-field="morningErectionPresent"><option value="">—</option><option value="yes" ${e.morningErectionPresent==='yes'?'selected':''}>Yes</option><option value="no" ${e.morningErectionPresent==='no'?'selected':''}>No</option></select></div><div class="field"><label>EHS 1–4 (optional)</label><select data-field="ehs"><option value="">—</option>${[1,2,3,4].map(x=>`<option value="${x}" ${Number(e.ehs)===x?'selected':''}>${x}</option>`).join('')}</select></div>`:''}
+    ${amTasks.some(t=>t.id==='weight')?`<div class="field"><label>Bodyweight (${settings.preferredWeightUnit})</label><input data-field="bodyWeight" type="number" step="0.1" value="${displayValue(e.bodyWeight)}"></div>`:''}
+    ${amTasks.some(t=>t.id==='waist')?`<div class="field"><label>Waist (${settings.preferredWaistUnit})</label><input data-field="waist" type="number" step="0.1" value="${displayValue(e.waist)}"></div>`:''}</div>
+    <h3>Today’s plan</h3>${taskList(amTasks,taskStates)}<button class="primary" data-complete="am">Save AM check-in</button></section>
+
+    <section class="card"><div class="row"><div><div class="eyebrow">PM check-in</div><h2 style="margin:4px 0 0">Evening</h2></div><span class="pill ${e.pmComplete?'success':''}">${e.pmComplete?'Saved':'Open'}</span></div>
+    ${taskList(pmTasks,taskStates)}
+    ${pmTasks.some(t=>t.id==='cardio')?`<div class="inline-fields"><div class="field"><label>Cardio minutes</label><input data-field="cardioMinutes" type="number" min="0" value="${displayValue(e.cardioMinutes)}"></div><div class="field"><label>Cardio type</label><select data-field="cardioType"><option value="">—</option><option ${e.cardioType==='Zone 2'?'selected':''}>Zone 2</option><option ${e.cardioType==='HIIT'?'selected':''}>HIIT</option><option ${e.cardioType==='Other'?'selected':''}>Other</option></select></div></div>`:''}
+    <div class="field"><label>Pelvic-floor sessions completed</label><div class="seg" data-seg="pelvic">${[0,1,2,3].map(x=>`<button type="button" data-pelvic="${x}" class="${Number(e.pelvicFloorSessionsCompleted||0)===x?'active':''}">${x}/3</button>`).join('')}</div></div>
+    <div class="info"><strong>Routine detail:</strong> ${esc(pelvicFloorDetails[s.phase])}</div>
