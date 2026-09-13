@@ -3,9 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="theme-color" content="#f5f5f7" />
+  <meta name="theme-color" content="#0b0f14" />
+  <meta name="color-scheme" content="dark" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="12 Week" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="stylesheet" href="styles.css" />
@@ -13,13 +14,250 @@
 </head>
 <body>
   <div id="app"></div>
+
+  <main id="learn-panel" class="learn-panel" hidden>
+    <section class="hero">
+      <div class="eyebrow">Beginner guide</div>
+      <h1>Learn</h1>
+      <div class="sub"><span>Plain-English definitions, your exact plan targets, and research notes.</span></div>
+    </section>
+
+    <section class="card learn-intro">
+      <span class="pill">How to use this page</span>
+      <h2 style="margin-top:10px">Tap anything you do not understand</h2>
+      <p class="muted">On the Today screen, task names and most field labels now act like help links. Tap one to jump here. Each section below tells you <strong>what the term means</strong>, <strong>what your plan says</strong>, and, when useful, a <strong>research note</strong>.</p>
+      <p class="privacy">The source plan includes some explicit sexual-performance drills. This tracker keeps clinical definitions and health observations, but does not turn those drills into step-by-step coaching. If a sexual-health symptom is persistent or concerning, use a clinician.</p>
+    </section>
+
+    <section class="card">
+      <h2>Baseline & tracking terms</h2>
+
+      <details class="details" open>
+        <summary>EHS — Erection Hardness Score</summary>
+        <div class="info"><strong>What it means:</strong> EHS is a one-item clinical scale used to describe erection firmness. It runs from 1 to 4.</div>
+        <div class="info"><strong>Your plan says:</strong> use it as an optional baseline/checkpoint metric alongside morning erection frequency, bodyweight, and waist.</div>
+        <div class="info"><strong>Research note:</strong> EHS has been validated as a simple patient-reported outcome. If you track it, treat it as one trend, not a grade on yourself.</div>
+        <a class="resource-link" href="https://pubmed.ncbi.nlm.nih.gov/17888069/" target="_blank" rel="noopener">Research: EHS validation ↗</a>
+      </details>
+
+      <details class="details">
+        <summary>Morning erection frequency</summary>
+        <div class="info"><strong>What it means:</strong> simply a private yes/no observation after waking. Sleep stage, stress, medications, illness and many other factors can affect it.</div>
+        <div class="info"><strong>Your plan says:</strong> track days per week and compare trends at baseline, Week 8 and Week 12.</div>
+        <div class="info"><strong>Research note:</strong> one morning is noisy data. Look at longer trends rather than interpreting a single day.</div>
+      </details>
+
+      <details class="details">
+        <summary>Bodyweight, waist & photos</summary>
+        <div class="info"><strong>What it means:</strong> bodyweight is total scale weight; waist is a simple body-composition trend marker. Measure your waist in the same place, under similar conditions, each time.</div>
+        <div class="info"><strong>Your plan says:</strong> use bodyweight and waist at baseline and checkpoints. Photos stay outside the app.</div>
+      </details>
+    </section>
+
+    <section class="card">
+      <h2>Pelvic floor: Kegels & relaxation</h2>
+
+      <details class="details" open>
+        <summary>What is the pelvic floor?</summary>
+        <div class="info">A group of muscles at the bottom of the pelvis that help support the bladder and bowel and help with urinary, bowel and sexual function.</div>
+      </details>
+
+      <details class="details">
+        <summary>Kegels — beginner definition</summary>
+        <div class="info"><strong>What it means:</strong> a Kegel is a small contraction of the pelvic-floor muscles. Think of the muscles you would use to stop urine or gas — but do <strong>not</strong> make a habit of training while urinating.</div>
+        <div class="info"><strong>Your plan says, Weeks 1–4:</strong> 3 sessions/day. Each session: 10 slow contractions held 5 seconds, 10 quick contractions, then 10 relaxation/reverse-Kegel reps.</div>
+        <div class="info"><strong>Your plan says, Weeks 5–12:</strong> build the slow holds to 8–10 seconds while breathing normally, keep 3 sessions/day, use more than one position, and do not keep escalating volume.</div>
+        <div class="info"><strong>Research note:</strong> Cleveland Clinic recommends focusing on correct technique and warns that overdoing Kegels can increase pelvic-floor tension or worsen symptoms. Stop if you get pain or urinary symptoms.</div>
+        <div class="resource-stack">
+          <a class="resource-link" href="https://my.clevelandclinic.org/health/treatments/22211-kegel-exercises-for-men" target="_blank" rel="noopener">Cleveland Clinic: Kegels for men ↗</a>
+          <a class="resource-link" href="https://www.youtube.com/watch?v=MJ7EfGu03-0" target="_blank" rel="noopener">Video: beginner Kegel guide by pelvic-floor physiotherapist Michelle Kenway ↗</a>
+        </div>
+      </details>
+
+      <details class="details">
+        <summary>Reverse Kegel / pelvic-floor relaxation</summary>
+        <div class="info"><strong>What it means:</strong> the relaxation side of pelvic-floor control. Instead of squeezing, you practice letting the pelvic-floor muscles soften and lengthen while breathing normally.</div>
+        <div class="info"><strong>Your plan says:</strong> include relaxation every session so the routine is not only tightening.</div>
+        <div class="info"><strong>Research note:</strong> if your pelvic floor is already overactive or painful, more strengthening can make things worse; a pelvic-floor physical therapist can help tell the difference.</div>
+        <a class="resource-link" href="https://www.youtube.com/watch?v=Fac5ihuQ1Ws" target="_blank" rel="noopener">Video: guided pelvic-floor relaxation for men ↗</a>
+      </details>
+    </section>
+
+    <section class="card">
+      <h2>Cardio & strength</h2>
+
+      <details class="details" open>
+        <summary>Zone 2 cardio</summary>
+        <div class="info"><strong>What it means:</strong> comfortable aerobic work. A common rough estimate is about 60–70% of estimated max heart rate, but the easiest beginner check is that you can still hold a light conversation.</div>
+        <div class="info"><strong>Your plan says, Weeks 1–4:</strong> 30–40 minutes, 4 times per week. Examples: brisk incline walk, easy bike or easy jog.</div>
+        <div class="info"><strong>Your plan says, Weeks 5–12:</strong> progress to 45–50 minutes, 4–5 times per week.</div>
+        <a class="resource-link" href="https://health.clevelandclinic.org/zone-2-cardio" target="_blank" rel="noopener">Cleveland Clinic: Zone 2 explained ↗</a>
+      </details>
+
+      <details class="details">
+        <summary>HIIT — 8 × 30 sec hard / 90 sec easy</summary>
+        <div class="info"><strong>What it means:</strong> high-intensity interval training. One round is 30 seconds of hard effort followed by 90 seconds of easy recovery.</div>
+        <div class="info"><strong>Your plan says:</strong> add one HIIT session per week in Phase 2. It is intentionally much shorter than Zone 2 work.</div>
+      </details>
+
+      <details class="details">
+        <summary>Strength training / compound lifts</summary>
+        <div class="info"><strong>What it means:</strong> exercises that train several muscle groups at once. Examples include squat patterns, hip hinges/deadlifts, presses, rows and lunges. “Legs included” means lower-body work is not optional.</div>
+        <div class="info"><strong>Your plan says:</strong> strength train 3 times per week.</div>
+        <div class="resource-stack">
+          <a class="resource-link" href="https://www.hss.edu/health-library/move-better/exercises-strengthen-knees" target="_blank" rel="noopener">HSS: squat + deadlift beginner form ↗</a>
+          <a class="resource-link" href="https://www.hss.edu/health-library/move-better/building-fitness-plan" target="_blank" rel="noopener">HSS: building a beginner fitness plan ↗</a>
+        </div>
+      </details>
+    </section>
+
+    <section class="card">
+      <h2>Sleep, food & supplements</h2>
+
+      <details class="details" open>
+        <summary>Sleep & fixed wake time</summary>
+        <div class="info"><strong>Your plan says:</strong> 7–9 hours nightly and a consistent wake time.</div>
+        <div class="info"><strong>Research note:</strong> for teenagers ages 13–18, the American Academy of Sleep Medicine recommends 8–10 hours per 24 hours. So if that age range applies, use 8–10 as the stronger general-health target.</div>
+        <a class="resource-link" href="https://aasm.org/wp-content/uploads/2017/04/Pediatricsleepdurationconsensus.pdf" target="_blank" rel="noopener">AASM sleep-duration consensus ↗</a>
+      </details>
+
+      <details class="details">
+        <summary>Protein — 1.6 g/kg</summary>
+        <div class="info"><strong>What it means:</strong> multiply bodyweight in kilograms by 1.6. If you use pounds first, divide pounds by 2.205 to get kilograms.</div>
+        <div class="info"><strong>Your plan says:</strong> use 1.6 g/kg/day in Phase 2+.</div>
+        <div class="info"><strong>Research note:</strong> protein needs in adolescents depend on growth, total calories and training load. The app keeps 1.6 g/kg as your plan target, not as a universal prescription.</div>
+      </details>
+
+      <details class="details">
+        <summary>Beetroot, leafy greens & nitric oxide</summary>
+        <div class="info"><strong>What it means:</strong> beetroot and leafy greens contain dietary nitrate, which can be converted into nitric oxide in the body.</div>
+        <div class="info"><strong>Your plan says:</strong> 500 mL beetroot juice or a concentrate shot, plus a handful of rocket/arugula or spinach.</div>
+        <div class="info"><strong>Research note:</strong> beetroot/nitrate research shows possible exercise effects, but results and dosing vary. Food sources are the lower-risk way to approach nitrate intake.</div>
+      </details>
+
+      <details class="details">
+        <summary>Citrulline</summary>
+        <div class="info"><strong>What it means:</strong> an amino acid the body can convert into arginine and then nitric oxide.</div>
+        <div class="info"><strong>Your plan says:</strong> 1.5–3 g/day.</div>
+        <div class="info"><strong>Research note:</strong> NIH says evidence for performance benefit is limited and longer-term supplement safety is not well established. The tracker treats this as a plan reference, not a recommendation.</div>
+        <a class="resource-link" href="https://ods.od.nih.gov/factsheets/ExerciseAndAthleticPerformance-HealthProfessional/" target="_blank" rel="noopener">NIH: exercise supplements fact sheet ↗</a>
+      </details>
+
+      <details class="details">
+        <summary>Supplement tiers from your plan</summary>
+        <div class="info"><strong>Your plan listed as stronger-evidence references:</strong> creatine, caffeine, vitamin D when appropriate, omega-3, magnesium, zinc when diet is poor, citrulline and beetroot.</div>
+        <div class="info"><strong>Your plan listed as weaker-evidence:</strong> maca, tongkat ali, ashwagandha and fenugreek.</div>
+        <div class="info"><strong>Research note:</strong> for young athletes, food-first guidance is preferred and supplement decisions should be individualized. Products can also be contaminated or mislabeled.</div>
+      </details>
+    </section>
+
+    <section class="card">
+      <h2>Grooming & skin care</h2>
+
+      <details class="details" open>
+        <summary>Trim vs shave</summary>
+        <div class="info"><strong>Your plan says:</strong> trim around 6 mm weekly rather than fully shaving.</div>
+        <div class="info"><strong>Research note:</strong> shaving can cause ingrown hairs and irritation. If you do shave, use a sharp clean razor, lubrication and shave with hair growth.</div>
+        <a class="resource-link" href="https://my.clevelandclinic.org/health/diseases/ingrown-pubic-hair" target="_blank" rel="noopener">Cleveland Clinic: ingrown pubic hair prevention ↗</a>
+      </details>
+
+      <details class="details">
+        <summary>Moisturize, exfoliate & hygiene</summary>
+        <div class="info"><strong>Your plan says:</strong> use an unscented moisturizer after showering, exfoliate gently once weekly, and do a thorough wash/dry weekly.</div>
+        <div class="info"><strong>Beginner rule:</strong> external skin only, gentle products, no fragrance if it irritates you, and stop any product that burns or causes a rash.</div>
+        <div class="info"><strong>Foreskin hygiene:</strong> if you have a foreskin that retracts comfortably, rinse underneath gently and return it to its normal position. Never force a tight or painful foreskin.</div>
+        <a class="resource-link" href="https://www.nhs.uk/conditions/phimosis/" target="_blank" rel="noopener">NHS: cleaning under the foreskin / phimosis guidance ↗</a>
+      </details>
+
+      <details class="details">
+        <summary>Body fat, waist & visible length</summary>
+        <div class="info"><strong>Your plan says:</strong> reducing excess suprapubic fat can make more of the shaft externally visible and uses waist as the honest tracker.</div>
+        <div class="info"><strong>Research note:</strong> suprapubic fat can reduce apparent visible length, but a precise promise like “5% fat loss reveals 1–1.5 cm” is not a reliable universal rule. Track waist/body composition, not a guaranteed centimeter outcome.</div>
+      </details>
+    </section>
+
+    <section class="card">
+      <h2>Phase checkpoints & mindset</h2>
+      <details class="details" open>
+        <summary>Week 8 checkpoint</summary>
+        <div class="info"><strong>Your plan says:</strong> compare morning erection frequency, optional EHS, waist, bodyweight, sleep/cardio consistency and your overall wellbeing with Week 1.</div>
+      </details>
+      <details class="details">
+        <summary>Weeks 11–12: stop obsessing over the score</summary>
+        <div class="info"><strong>Your plan says:</strong> keep the healthy habits but reduce obsessive self-monitoring. The point of 8+ weeks of tracking is to give you enough trend data that you no longer need to judge every single day.</div>
+      </details>
+      <details class="details">
+        <summary>Confidence</summary>
+        <div class="info">Use the evidence you generated yourself: sleep consistency, fitness, waist/body composition trends, training adherence, grooming and general wellbeing. The plan’s core mindset line is: <strong>“Nobody’s counting.”</strong></div>
+        <div class="info">Communication and paying attention to another person beats mind-reading and self-judging. The tracker should support confidence, not become another source of anxiety.</div>
+      </details>
+    </section>
+
+    <section class="card">
+      <h2>Medication & safety review</h2>
+      <details class="details" open>
+        <summary>Medication / habit review</summary>
+        <div class="info"><strong>Your plan says:</strong> if relevant, review medicines or habits that can affect energy, sexual function or training — including finasteride, SSRIs, beta blockers, isotretinoin, nicotine, heavy cannabis use or regular alcohol.</div>
+        <div class="info"><strong>Important:</strong> do not stop a prescription medicine on your own. This is a clinician conversation.</div>
+      </details>
+      <details class="details">
+        <summary>Do not do</summary>
+        <div class="info danger-info">Avoid jelqing, clamping, hanging weights, unsupervised enlargement devices, pumps used as a size hack, high-dose yohimbine, unregulated “male enhancement/size” products and testosterone boosters without medical indication. Pain is a stop signal, not a training goal.</div>
+      </details>
+    </section>
+  </main>
+
   <nav class="bottom-nav" aria-label="Primary">
     <button data-tab="today" class="active"><span>●</span>Today</button>
     <button data-tab="progress"><span>⌁</span>Progress</button>
     <button data-tab="plan"><span>▦</span>Plan</button>
+    <button data-tab="learn"><span>?</span>Learn</button>
     <button data-tab="settings"><span>⚙︎</span>Settings</button>
   </nav>
   <div id="toast" role="status" aria-live="polite"></div>
   <script type="module" src="src/app.js"></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const app = document.querySelector('#app');
+      const learn = document.querySelector('#learn-panel');
+      const navButtons = [...document.querySelectorAll('.bottom-nav button')];
+      const openLearn = () => {
+        app.hidden = true;
+        learn.hidden = false;
+        navButtons.forEach(b => b.classList.toggle('active', b.dataset.tab === 'learn'));
+        window.scrollTo({top:0, behavior:'smooth'});
+      };
+      const closeLearn = () => {
+        learn.hidden = true;
+        app.hidden = false;
+      };
+
+      navButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          if (button.dataset.tab === 'learn') openLearn();
+          else closeLearn();
+        });
+      });
+
+      document.addEventListener('click', event => {
+        if (event.target.closest('.task-label') || event.target.closest('.field label')) {
+          if (!learn.hidden) return;
+          event.preventDefault();
+          event.stopPropagation();
+          openLearn();
+        }
+      }, true);
+
+      const toneDownSupplementDoses = () => {
+        document.querySelectorAll('.task-label').forEach(el => {
+          if (el.textContent.trim() === 'Creatine 5 g') el.textContent = 'Creatine — plan reference';
+          if (el.textContent.trim() === 'Citrulline 1.5–3 g') el.textContent = 'Citrulline — plan reference';
+        });
+      };
+      const observer = new MutationObserver(toneDownSupplementDoses);
+      observer.observe(app, {childList:true, subtree:true});
+      toneDownSupplementDoses();
+    });
+  </script>
 </body>
 </html>
