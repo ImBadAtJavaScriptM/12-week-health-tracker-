@@ -1,0 +1,110 @@
+    ${s.phase>=2 && settings.proteinTargetEnabled?`<div class="inline-fields"><div class="field"><label>Protein grams</label><input data-field="proteinGrams" type="number" min="0" value="${displayValue(e.proteinGrams)}"></div><div class="field"><label>Current target</label><input value="${weightTarget?weightTarget+' g/day':'Add bodyweight first'}" disabled></div></div>`:''}
+    <div class="inline-fields"><div class="field"><label>Evening energy 1–5</label><input data-field="eveningEnergy" type="number" min="1" max="5" value="${displayValue(e.eveningEnergy)}"></div><div class="field"><label>Stress 1–5</label><input data-field="stress" type="number" min="1" max="5" value="${displayValue(e.stress)}"></div></div>
+    ${supplementFields(e)}
+    <details class="details"><summary>More details</summary><div class="field"><label>Confidence / wellbeing 1–5</label><input data-field="confidenceWellbeing" type="number" min="1" max="5" value="${displayValue(e.confidenceWellbeing)}"></div><div class="field"><label>Recovery / body notes</label><textarea data-field="notes" rows="3">${esc(e.notes||'')}</textarea></div><div class="field"><label>Private health note</label><textarea data-field="privateHealthNotes" rows="3">${esc(e.privateHealthNotes||'')}</textarea></div></details>
+    <button class="primary" data-complete="pm">Save PM check-in</button></section>`;
+}
+
+function taskList(tasks,states){
+  if(!tasks.length) return '<p class="muted">No scheduled items here today.</p>';
+  return tasks.map(t=>`<label class="task"><input type="checkbox" data-task="${t.id}" ${states[t.id]?'checked':''}><span class="task-main"><span class="task-label">${esc(t.label)}</span><span class="task-meta">${t.optional?'Optional':'Scheduled'}</span></span></label>`).join('');
+}
+
+function supplementFields(e){
+  const names={creatine:'Creatine 5 g',caffeine:'Caffeine pre-workout',vitaminD:'Vitamin D',omega3:'Omega-3',magnesium:'Magnesium glycinate',zinc:'Zinc',citrulline:'Citrulline 1.5–3 g'};
+  const enabled=Object.entries(settings.enabledSupplements||{}).filter(([,v])=>v);
+  if(!enabled.length) return '';
+  const states=e.supplementStates||{};
+  return `<h3>Enabled supplements</h3><div class="info">Plan reference — not a prescription. Use only items you already chose and have cleared appropriately.</div>${enabled.map(([k])=>`<label class="task"><input type="checkbox" data-supp="${k}" ${states[k]?'checked':''}><span class="task-main"><span class="task-label">${esc(names[k])}</span></span></label>`).join('')}`;
+}
+
+function latestWeight(){
+  const dates=Object.keys(entries).sort().reverse();
+  for(const d of dates) if(entries[d].bodyWeight) return entries[d].bodyWeight;
+  return null;
+}
+
+function wireBaseline(){
+  const btn=document.querySelector('#save-baseline'); if(!btn) return;
+  btn.addEventListener('click',async()=>{
+    const val=id=>document.querySelector(id)?.value;
+    const b={morningErectionDaysPerWeek:num(val('#b-me')),ehs:num(val('#b-ehs')),bodyWeight:num(val('#b-weight')),waist:num(val('#b-waist')),typicalSleepHours:num(val('#b-sleep')),weeklyCardioSessions:num(val('#b-cardio')),weeklyStrengthSessions:num(val('#b-strength')),energy:num(val('#b-energy')),wellbeing:num(val('#b-well')),createdAt:new Date().toISOString()};
+    await set('baseline','main',b); showToast('Baseline saved'); render();
+  });
+}
+function num(v){return v===''||v==null?null:Number(v);}
+
+function wireToday(date,sched){
+  let e={...(entries[date]||{}),date,weekNumber:sched.week,phaseNumber:sched.phase,taskStates:{...(entries[date]?.taskStates||{})},supplementStates:{...(entries[date]?.supplementStates||{})}};
+  const save=async()=>{ e.updatedAt=new Date().toISOString(); entries[date]=e; await set('dailyEntries',date,e); };
+  document.querySelectorAll('[data-field]').forEach(el=>el.addEventListener('change',async()=>{ const f=el.dataset.field; const isNum=['sleepHours','morningEnergy','ehs','bodyWeight','waist','cardioMinutes','proteinGrams','eveningEnergy','stress','confidenceWellbeing'].includes(f); e[f]=isNum?num(el.value):el.value; if(f==='cardioMinutes'&&Number(el.value)>0)e.cardioDone=true; await save(); showToast('Saved'); }));
+  document.querySelectorAll('[data-task]').forEach(el=>el.addEventListener('change',async()=>{ e.taskStates[el.dataset.task]=el.checked; if(el.dataset.task==='cardio')e.cardioDone=el.checked; if(el.dataset.task==='strength')e.strengthDone=el.checked; await save(); }));
+  document.querySelectorAll('[data-supp]').forEach(el=>el.addEventListener('change',async()=>{e.supplementStates[el.dataset.supp]=el.checked;await save();}));
+  document.querySelectorAll('[data-pelvic]').forEach(b=>b.addEventListener('click',async()=>{e.pelvicFloorSessionsCompleted=Number(b.dataset.pelvic);e.taskStates.pelvic=e.pelvicFloorSessionsCompleted>=3;await save();render();}));
+  document.querySelectorAll('[data-complete]').forEach(b=>b.addEventListener('click',async()=>{e[b.dataset.complete==='am'?'amComplete':'pmComplete']=true;await save();showToast(`${b.dataset.complete.toUpperCase()} check-in saved`);render();}));
+}
+
+async function renderProgress(){
+  entries=await getAll('dailyEntries');
+  const baseline=await get('baseline','main');
+  const cp8=await get('checkpoints','8')||{};
+  const cp12=await get('checkpoints','12')||{};
+  const wm=weeklyMetrics(entries,d=>scheduleForDate(d,settings.programStartDate,settings));
+  const weeks=Array.from({length:12},(_,i)=>i+1);
+  const allEntries=Object.values(entries);
+  const weights=Object.entries(entries).filter(([,e])=>e.bodyWeight).sort();
+  const waists=Object.entries(entries).filter(([,e])=>e.waist).sort();
+  const sleep=allEntries.map(e=>Number(e.sleepHours)).filter(Boolean);
+  const cardio=allEntries.reduce((a,e)=>a+(e.cardioDone?(Number(e.cardioMinutes)||0):0),0);
+  const strengthDone=allEntries.filter(e=>e.strengthDone).length;
+  const avgSleep=sleep.length?(sleep.reduce((a,b)=>a+b,0)/sleep.length).toFixed(1):'—';
+  const sleepPct=sleep.length?Math.round(100*sleep.filter(x=>x>=7&&x<=9).length/sleep.length):0;
+  const currentW=weekNumber(isoDate(),settings.programStartDate);
+  app.innerHTML=`<main><section class="hero"><div class="eyebrow">Trends</div><h1>Progress</h1><div class="sub"><span>Your data stays on this device</span></div></section>
+  <section class="card"><div class="stat-grid"><div class="stat"><div class="label">Avg sleep</div><div class="value">${avgSleep}${avgSleep==='—'?'':' h'}</div></div><div class="stat"><div class="label">7–9 h nights</div><div class="value">${sleepPct}%</div></div><div class="stat"><div class="label">Cardio logged</div><div class="value">${cardio}m</div></div><div class="stat"><div class="label">Strength sessions</div><div class="value">${strengthDone}</div></div></div></section>
+  <section class="card"><h2>Weekly adherence</h2>${barChart(weeks.map(w=>wm[w]?.adherencePct||0),'W')}</section>
+  <section class="card"><h2>Weekly cardio minutes</h2>${barChart(weeks.map(w=>wm[w]?.cardio||0),'W')}</section>
+  <section class="card"><h2>Measurements</h2><div class="stat-grid"><div class="stat"><div class="label">Latest weight</div><div class="value">${weights.length?weights.at(-1)[1].bodyWeight+' '+settings.preferredWeightUnit:'—'}</div></div><div class="stat"><div class="label">Latest waist</div><div class="value">${waists.length?waists.at(-1)[1].waist+' '+settings.preferredWaistUnit:'—'}</div></div></div></section>
+  ${currentW>=8?checkpointForm(8,cp8,baseline):''}
+  ${currentW>=12?checkpointForm(12,cp12,baseline):''}
+  </main>`;
+  wireCheckpointForms();
+}
+
+function barChart(values,prefix){const max=Math.max(1,...values);return `<div class="chart">${values.map((v,i)=>`<div class="bar-wrap"><div class="bar" title="${v}" style="height:${Math.max(3,(v/max)*95)}%"></div><div class="bar-label">${prefix}${i+1}</div></div>`).join('')}</div>`;}
+function checkpointForm(w,c,b){
+  const isFinal=w===12;
+  return `<section class="card" data-checkpoint="${w}"><span class="pill">${isFinal?'Final review':'Week 8 checkpoint'}</span><h2 style="margin-top:10px">${isFinal?'Baseline → Week 8 → Week 12':'Compare with Week 1'}</h2><p class="muted">Trend comparison, not a score. Baseline weight: ${b?.bodyWeight??'—'} ${settings.preferredWeightUnit}; baseline waist: ${b?.waist??'—'} ${settings.preferredWaistUnit}; baseline sleep: ${b?.typicalSleepHours??'—'} h.</p>
+  <div class="inline-fields"><div class="field"><label>Morning erection frequency (days/week, optional)</label><input data-cp="morningErectionDaysPerWeek" type="number" min="0" max="7" value="${displayValue(c.morningErectionDaysPerWeek)}"></div><div class="field"><label>EHS 1–4 (optional)</label><input data-cp="ehs" type="number" min="1" max="4" value="${displayValue(c.ehs)}"></div><div class="field"><label>Bodyweight (${settings.preferredWeightUnit})</label><input data-cp="bodyWeight" type="number" step="0.1" value="${displayValue(c.bodyWeight)}"></div><div class="field"><label>Waist (${settings.preferredWaistUnit})</label><input data-cp="waist" type="number" step="0.1" value="${displayValue(c.waist)}"></div><div class="field"><label>Energy / wellbeing 1–5</label><input data-cp="energyWellbeing" type="number" min="1" max="5" value="${displayValue(c.energyWellbeing)}"></div></div>
+  <div class="field"><label>${isFinal?'Final reflection':'Checkpoint reflection'}</label><textarea data-cp="reflection" rows="3">${esc(c.reflection||'')}</textarea></div><button class="primary" data-save-cp="${w}">Save ${isFinal?'final review':'checkpoint'}</button></section>`;
+}
+function wireCheckpointForms(){
+  document.querySelectorAll('[data-save-cp]').forEach(btn=>btn.addEventListener('click',async()=>{
+    const w=btn.dataset.saveCp; const card=btn.closest('[data-checkpoint]'); const data={weekNumber:Number(w),createdAt:new Date().toISOString()};
+    card.querySelectorAll('[data-cp]').forEach(el=>{const k=el.dataset.cp; data[k]=k==='reflection'?el.value:num(el.value);});
+    const wm=weeklyMetrics(entries,d=>scheduleForDate(d,settings.programStartDate,settings));
+    data.avgSleep=wm[w]?.avgSleep||null; data.cardioMinutes=wm[w]?.cardio||0; data.strengthAdherence=wm[w]?.strengthPct||0; data.overallAdherence=wm[w]?.adherencePct||0;
+    await set('checkpoints',String(w),data); showToast(`Week ${w} review saved`);
+  }));
+}
+
+async function renderPlan(){
+  const today=isoDate(); const currentPhase=phaseNumber(today,settings.programStartDate);
+  let phases=[1,2,3].map(p=>{const d=phaseDates(p,settings.programStartDate);const targets=p===1?'Zone 2 30–40 min ×4 · Strength ×3 · Pelvic floor 3×/day':'Zone 2 45–50 min ×4–5 · HIIT 8×30/90 ×1 · Strength ×3 · Pelvic floor 3×/day';return `<div class="phase-card ${currentPhase===p?'current':''}"><div class="eyebrow">Phase ${p}</div><h3>${phaseLabel(p)}</h3><div class="muted">${formatShort(d.start)} – ${formatShort(d.end)}</div><p>${targets}</p></div>`;}).join('');
+  let weekHtml=''; for(let w=1;w<=12;w++){const days=[];for(let i=0;i<7;i++){const date=dateForProgramDay((w-1)*7+i,settings.programStartDate);const s=scheduleForDate(date,settings.programStartDate,settings);const key=s.tasks.filter(t=>['cardio','strength','weight','waist','trim','review'].includes(t.id)).map(t=>t.label);days.push(`<div class="day-card ${date===today?'today':''}"><div class="date">${toLocalDate(date).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})}</div><ul>${(key.length?key:['Daily wellness + recovery']).map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`);} weekHtml+=`<details class="card"><summary><strong>Week ${w}</strong> · ${phaseLabel(w<=4?1:w<=8?2:3)}</summary><div class="week-grid" style="margin-top:12px">${days.join('')}</div></details>`;}
+  app.innerHTML=`<main><section class="hero"><div class="eyebrow">Sep 14 – Dec 6, 2026</div><h1>Your 12-week plan</h1><div class="sub"><span>Exact phase targets and weekly schedule</span></div></section><section class="card"><h2>Phases</h2>${phases}</section><section class="card"><h2>Core reference</h2><div class="info"><strong>Sleep:</strong> 7–9 h nightly with a consistent wake time.</div><div class="info"><strong>Nutrition habit:</strong> 500 mL beetroot juice or a concentrate shot, plus a handful of arugula/rocket or spinach.</div><div class="info"><strong>Protein (Phase 2+):</strong> 1.6 g/kg/day when enabled.</div><div class="info"><strong>Grooming:</strong> ~6 mm trim weekly, moisturizer daily, gentle exfoliation weekly, thorough wash/dry weekly, and comfortable supportive underwear rather than an overly compressive fit.</div><div class="info"><strong>Optional weaker-evidence references:</strong> maca, tongkat ali, ashwagandha, and fenugreek are reference-only and are not put on the daily checklist.</div></section><section class="card"><h2>Safety / avoid</h2><p class="privacy">Avoid jelqing, clamping, hanging weights, extenders used for unsupervised enlargement, pumps as a size hack, high-dose yohimbine, unregulated “male enhancement/size” products, and testosterone boosters without medical indication. Stop pelvic-floor work and seek medical guidance if it causes pain or urinary symptoms.</p></section>${weekHtml}</main>`;
+}
+
+async function renderSettings(){
+  app.innerHTML=`<main><section class="hero"><div class="eyebrow">Private & local</div><h1>Settings</h1><div class="sub"><span>No account · no analytics · no cloud</span></div></section>
+  <section class="card"><h2>Program</h2><div class="field"><label>Start date</label><input id="start-date" type="date" value="${settings.programStartDate}"></div><p class="muted">Changing the start date recalculates all 12 program weeks.</p><div class="inline-fields"><div class="field"><label>Weight unit</label><select id="weight-unit"><option ${settings.preferredWeightUnit==='lb'?'selected':''}>lb</option><option ${settings.preferredWeightUnit==='kg'?'selected':''}>kg</option></select></div><div class="field"><label>Waist unit</label><select id="waist-unit"><option ${settings.preferredWaistUnit==='in'?'selected':''}>in</option><option ${settings.preferredWaistUnit==='cm'?'selected':''}>cm</option></select></div></div></section>
+  <section class="card"><h2>Optional tracking</h2>${toggle('ehs','Morning-health / EHS tracking',settings.ehsTrackingEnabled)}${toggle('protein','Protein target calculation',settings.proteinTargetEnabled)}</section>
+  <section class="card"><h2>Supplement checklist</h2><p class="muted">Plan reference — not a prescription. Disabled by default.</p>${suppToggle('creatine','Creatine 5 g/day')}${suppToggle('caffeine','Caffeine pre-workout')}${suppToggle('vitaminD','Vitamin D')}${suppToggle('omega3','Omega-3')}${suppToggle('magnesium','Magnesium glycinate at night')}${suppToggle('zinc','Zinc only if diet is poor / deficiency is a concern')}${suppToggle('citrulline','Citrulline 1.5–3 g/day')}</section>
+  <section class="card"><h2>Phase 3 medication/habit review</h2><p class="privacy">The supplied plan flags finasteride, SSRIs, beta blockers, isotretinoin, nicotine, heavy cannabis use, and regular/heavy alcohol use as things worth reviewing with a clinician if concerns persist. <strong>Do not stop prescribed medication based on this app.</strong></p></section>
+  <section class="card"><h2>Backup & restore</h2><p class="privacy">Safari website data can be erased. Export a backup periodically if you care about keeping your history.</p><div class="button-row"><button class="primary" id="export">Export backup</button><label class="secondary" style="display:inline-flex;align-items:center">Restore backup<input id="restore" type="file" accept="application/json" hidden></label></div></section>
+  <section class="card"><h2>Add to Home Screen</h2><ol class="privacy"><li>Open the hosted tracker in Safari on iPhone.</li><li>Tap Share.</li><li>Tap <strong>Add to Home Screen</strong>.</li><li>Open “12 Week” from your Home Screen. After the first successful load, the app shell works offline.</li></ol></section>
+  <section class="card"><h2>Privacy</h2><p class="privacy">Normal app use sends no tracker data anywhere. Everything is stored in IndexedDB on this device. No analytics, ads, remote fonts, or cloud database are included.</p><div class="row"><span class="muted">Version ${APP_VERSION}</span><button class="danger-btn" id="reset">Reset all data</button></div></section></main>`;
+  wireSettings();
+}
+function toggle(id,label,on){return `<label class="task"><input type="checkbox" id="toggle-${id}" ${on?'checked':''}><span class="task-main"><span class="task-label">${esc(label)}</span></span></label>`;}
+function suppToggle(id,label){return `<label class="task"><input type="checkbox" data-supp-toggle="${id}" ${settings.enabledSupplements?.[id]?'checked':''}><span class="task-main"><span class="task-label">${esc(label)}</span></span></label>`;}
